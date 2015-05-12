@@ -8,7 +8,11 @@
 VERSION="1.3.0"
 
 
+# \033 是 C-Style 的跳脫字元
+# \033[<N>A 可以讓 Cursor 往上 N 行，所以 \033[A 就是往上一行
 UP=$'\033[A'
+
+# \033[<N>B 可以讓 Cursor 往下 N 行，所以 \033[AB 就是往下一行
 DOWN=$'\033[B'
 
 
@@ -57,13 +61,27 @@ set_default() {
   #   每次迴圈的內容
   # done
   for (( i=0 ; i<${#BINS[@]} ; i++ )); do
+    # $1 是函數執行時丟進來的第一個參數
+    # test A = B 會在為 True 的時候回傳 0
+    # if 判斷式 then
+    #   運算式
+    # fi
+    # 會在判斷式回傳 0 的狀況執行運算式，不為 0 則不執行
     if test ${BINS[$i]} = $1; then
+      # 把 DEFAULT 變數設定為符合條件時的 index
       DEFAULT=$i
     fi
   done
 }
 
+# 把 VERSIONS_DIR 陣列裡的每個元素當作 dir 然後個跑一次
+# for 迴圈內變數名稱 in ${陣列變數名稱[@]}; do
+#   每次迴圈的內容
+# done
 for dir in ${VERSIONS_DIR[@]}; do
+  # test -d 會測試如果檔案存在而且是資料夾的話為 True
+  # 如果 test 結果為 True 會因為 || 短路，反之則執行右邊運算式
+  # mkdir -p 可以自動建立多層目錄，不會因為沒有上層目錄而錯誤
   test -d $dir || mkdir -p $dir
 done
 
@@ -71,6 +89,7 @@ done
 # Log <type> <msg>
 #
 
+# 宣告 log 函數
 log() {
   printf "  \033[36m%10s\033[0m : \033[90m%s\033[0m\n" $1 $2
 }
@@ -79,6 +98,9 @@ log() {
 # Exit with the given <msg ...>
 #
 
+# 宣告 abort 函數
+# \033[31m -> 31m 是 紅色字
+# \033[0m  ->  0m 是 reset
 abort() {
   printf "\n  \033[31mError: $@\033[0m\n\n" && exit 1
 }
@@ -87,6 +109,7 @@ abort() {
 # Ensure we have curl or wget support.
 #
 
+# 宣告 GET 變數為空字串
 GET=
 
 # wget support (Added --no-check-certificate for Github downloads)
