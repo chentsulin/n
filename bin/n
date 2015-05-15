@@ -4,7 +4,7 @@
 # Setup.
 #
 
-# 設定 VERSION 變數為 "1.3.0"
+# 設定 `VERSION` 變數為 "1.3.0"
 VERSION="1.3.0"
 
 
@@ -16,30 +16,30 @@ UP=$'\033[A'
 DOWN=$'\033[B'
 
 
-# 如果沒有 N_PREFIX 變數就設定為 /usr/local
+# 如果沒有 `N_PREFIX` 變數就設定為 /usr/local
 N_PREFIX=${N_PREFIX-/usr/local}
 
-# 設定 BASE_VERSIONS_DIR 為 $N_PREFIX 串接 /n/versions
+# 設定 `BASE_VERSIONS_DIR` 為 $N_PREFIX 串接 /n/versions
 BASE_VERSIONS_DIR=$N_PREFIX/n/versions
 
 #
 # All Bin(node/io) configurations
 #
 
-# 宣告 BINS 變數為含有 "node"、"io" 兩個元素的陣列
+# 宣告 `BINS` 變數為含有 "node"、"io" 兩個元素的陣列
 BINS=("node"
       "io")
 
-# 宣告 MIRROR 變數為含有 NODE_MIRROR 變數的值 (沒有的話會是 https://nodejs.org/dist/)、
+# 宣告 `MIRROR` 變數為含有 `NODE_MIRROR` 變數的值 (沒有的話會是 https://nodejs.org/dist/)、
 # IO_MIRROR 變數的值 (沒有的話會是 https://iojs.org/dist/) 兩個元素的陣列
 MIRROR=(${NODE_MIRROR-https://nodejs.org/dist/}
         ${IO_MIRROR-https://iojs.org/dist/})
 
-# 宣告 BIN_NAME 變數為含有 "node"、"iojs" 兩個元素的陣列
+# 宣告 `BIN_NAME` 變數為含有 "node"、"iojs" 兩個元素的陣列
 BIN_NAME=("node"
           "iojs")
 
-# 宣告 VERSIONS_DIR 變數為含有 $BASE_VERSIONS_DIR 和 /node 串接的值、
+# 宣告 `VERSIONS_DIR` 變數為含有 $BASE_VERSIONS_DIR 和 /node 串接的值、
 # $BASE_VERSIONS_DIR 和 /io 串接的值 兩個元素的陣列
 VERSIONS_DIR=($BASE_VERSIONS_DIR/node
               $BASE_VERSIONS_DIR/io)
@@ -48,7 +48,7 @@ VERSIONS_DIR=($BASE_VERSIONS_DIR/node
 # State
 #
 
-# 設定 DEFAULT 變數為 0
+# 設定 `DEFAULT` 變數為 0
 DEFAULT=0
 
 #
@@ -56,7 +56,7 @@ DEFAULT=0
 #
 
 set_default() {
-  # ${#BINS[@] 或 ${#BINS[*]} 都能取到 BINS 陣列長度
+  # ${#BINS[@] 或 ${#BINS[*]} 都能取到 `BINS` 陣列長度
   # for (初始設定;繼續條件;迴圈後執行); do
   #   每次迴圈的內容
   # done
@@ -74,7 +74,7 @@ set_default() {
   done
 }
 
-# 把 VERSIONS_DIR 陣列裡的每個元素當作 dir 然後個跑一次
+# 把 `VERSIONS_DIR` 陣列裡的每個元素當作 dir 然後個跑一次
 # for 迴圈內變數名稱 in ${陣列變數名稱[@]}; do
 #   每次迴圈的內容
 # done
@@ -89,7 +89,7 @@ done
 # Log <type> <msg>
 #
 
-# 宣告 log 函數
+# 宣告 `log` 函數
 log() {
   printf "  \033[36m%10s\033[0m : \033[90m%s\033[0m\n" $1 $2
 }
@@ -98,7 +98,7 @@ log() {
 # Exit with the given <msg ...>
 #
 
-# 宣告 abort 函數
+# 宣告 `abort` 函數
 # \033[31m -> 31m 是 紅色字
 # \033[0m  ->  0m 是 reset
 abort() {
@@ -109,36 +109,56 @@ abort() {
 # Ensure we have curl or wget support.
 #
 
-# 宣告 GET 變數為空字串
+# 宣告 `GET` 變數為空字串
 GET=
 
 # wget support (Added --no-check-certificate for Github downloads)
+
+# `command -v` 將命令的絕對路徑輸出，找不到回傳 > 0 的值
+# `> /dev/null` 把輸出丟掉
+# 如果有 `wget` 指令就把 `GET` 變數設定成 `wget --no-check-certificate -q -O-`
 command -v wget > /dev/null && GET="wget --no-check-certificate -q -O-"
 
+# 大部份同上
+# 如果有 `curl` 指令就把 `GET` 變數設定成 `curl -# -L`
 command -v curl > /dev/null && GET="curl -# -L"
 
+# `test -z` 測試字串長度是否為 0，為 0 回傳 True
+# 如果字串長度為 0，會繼續執行右邊，呼叫 `abort` 函數，丟出錯誤訊息 "curl or wget required"
 test -z "$GET" && abort "curl or wget required"
 
 #
 # Functions used when showing versions installed
 #
 
+# 宣告 `enter_fullscreen` 函數
 enter_fullscreen() {
+  # 切換到另一個螢幕
   tput smcup
+  # 把打字時的顯示關掉
   stty -echo
 }
 
+# 宣告 `leave_fullscreen` 函數
 leave_fullscreen() {
+  # 切換回主螢幕
   tput rmcup
+  # 把打字時的顯示打開
   stty echo
 }
 
+# 宣告 `handle_sigint` 函數
 handle_sigint() {
+  # 呼叫 `leave_fullscreen` 函數
   leave_fullscreen
+  # 離開並回傳上一個執行的 `leave_fullscreen` 執行結果回傳值當狀態碼
   exit $?
 }
 
+# 宣告 `handle_sigtstp` 函數
+#
 handle_sigtstp() {
+  # 呼叫 `leave_fullscreen` 函數
   leave_fullscreen
   kill -s SIGSTOP $$
 }
@@ -147,6 +167,7 @@ handle_sigtstp() {
 # Output usage information.
 #
 
+# 宣告 `display_help` 函數
 display_help() {
   cat <<-EOF
 
@@ -203,6 +224,7 @@ EOF
 # Hide cursor.
 #
 
+# 宣告 `hide_cursor` 函數
 hide_cursor() {
   printf "\e[?25l"
 }
@@ -211,6 +233,7 @@ hide_cursor() {
 # Show cursor.
 #
 
+# 宣告 `show_cursor` 函數
 show_cursor() {
   printf "\e[?25h"
 }
@@ -219,6 +242,7 @@ show_cursor() {
 # Output version after selected.
 #
 
+# 宣告 `next_version_installed` 函數
 next_version_installed() {
   list_versions_installed | grep $selected -A 1 | tail -n 1
 }
@@ -227,6 +251,7 @@ next_version_installed() {
 # Output version before selected.
 #
 
+# 宣告 `prev_version_installed` 函數
 prev_version_installed() {
   list_versions_installed | grep $selected -B 1 | head -n 1
 }
@@ -235,6 +260,7 @@ prev_version_installed() {
 # Output n version.
 #
 
+# 宣告 `display_n_version` 函數
 display_n_version() {
   echo $VERSION && exit 0
 }
@@ -243,6 +269,7 @@ display_n_version() {
 # Check for installed version, and populate $active
 #
 
+# 宣告 `check_current_version` 函數
 check_current_version() {
   command -v node &> /dev/null
   if test $? -eq 0; then
@@ -262,6 +289,7 @@ check_current_version() {
 # Display sorted versions directories paths.
 #
 
+# 宣告 `versions_paths` 函數
 versions_paths() {
   find $BASE_VERSIONS_DIR -maxdepth 2 -type d \
     | sed 's|'$BASE_VERSIONS_DIR'/||g' \
@@ -273,6 +301,7 @@ versions_paths() {
 # Display installed versions with <selected>
 #
 
+# 宣告 `display_versions_with_selected` 函數
 display_versions_with_selected() {
   selected=$1
   echo
@@ -290,6 +319,7 @@ display_versions_with_selected() {
 # List installed versions.
 #
 
+# 宣告 `list_versions_installed` 函數
 list_versions_installed() {
   for version in $(versions_paths); do
     echo $version
@@ -300,6 +330,7 @@ list_versions_installed() {
 # Display current node --version and others installed.
 #
 
+# 宣告 `display_versions` 函數
 display_versions() {
   enter_fullscreen
   check_current_version
