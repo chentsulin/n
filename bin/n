@@ -117,10 +117,15 @@ GET=
 # `command -v` 將命令的絕對路徑輸出，找不到回傳 > 0 的值
 # `> /dev/null` 把輸出丟掉
 # 如果有 `wget` 指令就把 `GET` 變數設定成 `wget --no-check-certificate -q -O-`
+# `--no-check-certificate` 不檢查 SSL 憑證
+# `-q` 是 `--quiet`，關掉輸出
+# `-O-` 跟 `-O -` 一樣，`-O` 是 `--output-document`，如果用 `-` 作為檔案，會印到標準輸出
 command -v wget > /dev/null && GET="wget --no-check-certificate -q -O-"
 
 # 大部份同上
 # 如果有 `curl` 指令就把 `GET` 變數設定成 `curl -# -L`
+# `-#` 會加上一個簡單的進度條
+# `-L` 在被重導向的時候會再對新的位置發出請求
 command -v curl > /dev/null && GET="curl -# -L"
 
 # `test -z` 測試字串長度是否為 0，為 0 回傳 True
@@ -169,6 +174,12 @@ handle_sigtstp() {
 
 # 宣告 `display_help` 函數
 display_help() {
+  # 這是一個 Here Document 的用法
+  # <<[-]word
+  #   here-document
+  # delimiter
+  # 把多行字串加上檔案結尾 (End of File) 生成一個臨時文件，然後丟給 cat
+  # `<<` 會把會把縮排算進去，`<<-` 不會算縮排
   cat <<-EOF
 
   Usage: n [options/env] [COMMAND] [args]
@@ -217,6 +228,7 @@ display_help() {
     -       rm
 
 EOF
+  # 成功地退出
   exit 0
 }
 
@@ -226,6 +238,7 @@ EOF
 
 # 宣告 `hide_cursor` 函數
 hide_cursor() {
+  #
   printf "\e[?25l"
 }
 
@@ -235,6 +248,7 @@ hide_cursor() {
 
 # 宣告 `show_cursor` 函數
 show_cursor() {
+  #
   printf "\e[?25h"
 }
 
@@ -244,6 +258,7 @@ show_cursor() {
 
 # 宣告 `next_version_installed` 函數
 next_version_installed() {
+  #
   list_versions_installed | grep $selected -A 1 | tail -n 1
 }
 
@@ -262,6 +277,7 @@ prev_version_installed() {
 
 # 宣告 `display_n_version` 函數
 display_n_version() {
+  # 印出 `$VERSION` 變數並成功退出
   echo $VERSION && exit 0
 }
 
@@ -271,11 +287,17 @@ display_n_version() {
 
 # 宣告 `check_current_version` 函數
 check_current_version() {
+  #
   command -v node &> /dev/null
+  #
   if test $? -eq 0; then
+    # 宣告區域變數 `current` 為 node 的版本 (`node --version` 的回傳結果)
     local current=$(node --version)
+    #
     current=${current#v}
+    #
     for bin in ${BINS[@]}; do
+      #
       if diff &> /dev/null \
         $BASE_VERSIONS_DIR/$bin/$current/bin/node \
         $(which node) ; then
@@ -363,6 +385,7 @@ display_versions() {
 # Move up a line and erase.
 #
 
+# 宣告 `erase_line` 函數
 erase_line() {
   printf "\033[1A\033[2K"
 }
@@ -371,6 +394,7 @@ erase_line() {
 # Check if the HEAD response of <url> is 200.
 #
 
+# 宣告 `is_ok` 函數
 is_ok() {
   curl -Is $1 | head -n 1 | grep 200 > /dev/null
 }
@@ -379,10 +403,15 @@ is_ok() {
 # Determine tarball url for <version>
 #
 
+# 宣告 `tarball_url` 函數
 tarball_url() {
+  # 宣告 `version` 區域變數為第一個參數的值
   local version=$1
+  # 宣告 `uname` 區域變數為詳細作業系統資訊 (`uname -a` 回傳結果)
   local uname="$(uname -a)"
+  # 宣告 `arch` 區域變數為 x86
   local arch=x86
+  # 宣告 `os` 區域變數為空字串
   local os=
 
   # from nave(1)
@@ -410,6 +439,7 @@ tarball_url() {
 # Activate <version>
 #
 
+# 宣告 `activate` 函數
 activate() {
   local version=$1
   check_current_version
@@ -425,6 +455,7 @@ activate() {
 # Activate previous node.
 #
 
+# 宣告 `activate_previous` 函數
 activate_previous() {
   test -f $BASE_VERSIONS_DIR/.prev || abort "no previous versions activated"
   local prev=$(cat $BASE_VERSIONS_DIR/.prev)
@@ -439,6 +470,7 @@ activate_previous() {
 # Install <version>
 #
 
+# 宣告 `install` 函數
 install() {
   local version=${1#v}
 
@@ -494,6 +526,7 @@ install() {
 # Remove <version ...>
 #
 
+# 宣告 `remove_versions` 函數
 remove_versions() {
   test -z $1 && abort "version(s) required"
   while test $# -ne 0; do
@@ -506,6 +539,7 @@ remove_versions() {
 # Output bin path for <version>
 #
 
+# 宣告 `display_bin_path_for_version` 函數
 display_bin_path_for_version() {
   test -z $1 && abort "version required"
   local version=${1#v}
@@ -521,6 +555,7 @@ display_bin_path_for_version() {
 # Execute the given <version> of node with [args ...]
 #
 
+# 宣告 `execute_with_version` 函數
 execute_with_version() {
   test -z $1 && abort "version required"
   local version=${1#v}
@@ -539,6 +574,7 @@ execute_with_version() {
 # Display the latest release version.
 #
 
+# 宣告 `display_latest_version` 函數
 display_latest_version() {
   $GET 2> /dev/null ${MIRROR[$DEFAULT]} \
     | egrep -o '[0-9]+\.[0-9]+\.[0-9]+' \
@@ -550,6 +586,7 @@ display_latest_version() {
 # Display the latest stable release version.
 #
 
+# 宣告 `display_latest_stable_version` 函數
 display_latest_stable_version() {
   $GET 2> /dev/null ${MIRROR[$DEFAULT]} \
     | egrep -o '[0-9]+\.[0-9]*[02468]\.[0-9]+' \
@@ -561,6 +598,7 @@ display_latest_stable_version() {
 # Display the versions available.
 #
 
+# 宣告 `display_remote_versions` 函數
 display_remote_versions() {
   check_current_version
   local versions=""
