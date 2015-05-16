@@ -238,7 +238,7 @@ EOF
 
 # 宣告 `hide_cursor` 函數
 hide_cursor() {
-  #
+  # 隱藏游標
   printf "\e[?25l"
 }
 
@@ -248,7 +248,7 @@ hide_cursor() {
 
 # 宣告 `show_cursor` 函數
 show_cursor() {
-  #
+  # 顯示游標
   printf "\e[?25h"
 }
 
@@ -258,7 +258,10 @@ show_cursor() {
 
 # 宣告 `next_version_installed` 函數
 next_version_installed() {
-  #
+  # 把 `list_versions_installed` 函數呼叫的結果丟給 `grep $selected -A 1`
+  # `$selected` 會取出 `selected` 全域變數的值
+  # `-A 1` 印出後面一行，然後丟給 `tail -n 1`
+  # `tail -n 1` 印出最後一行
   list_versions_installed | grep $selected -A 1 | tail -n 1
 }
 
@@ -268,6 +271,8 @@ next_version_installed() {
 
 # 宣告 `prev_version_installed` 函數
 prev_version_installed() {
+  # `-B 1` 印出前面一行，然後丟給 `head -n 1`
+  # `head -n 1` 印出第一行
   list_versions_installed | grep $selected -B 1 | head -n 1
 }
 
@@ -293,11 +298,12 @@ check_current_version() {
   if test $? -eq 0; then
     # 宣告區域變數 `current` 為 node 的版本 (`node --version` 的回傳結果)
     local current=$(node --version)
-    #
+    # 把左邊的 v 切掉
     current=${current#v}
     #
     for bin in ${BINS[@]}; do
-      #
+      # `diff &> /dev/null` 跟 `diff > /dev/null 2>&1` 意思一樣
+      # `diff > /dev/null 2>&1` 把標準錯誤丟到標準輸出 (2>&1)，再把標準輸出丟掉 (> /dev/null)
       if diff &> /dev/null \
         $BASE_VERSIONS_DIR/$bin/$current/bin/node \
         $(which node) ; then
@@ -343,7 +349,9 @@ display_versions_with_selected() {
 
 # 宣告 `list_versions_installed` 函數
 list_versions_installed() {
+  # 把 `versions_paths` 函數呼叫的結果當作陣列，一個一個把元素當作 `version` 變數
   for version in $(versions_paths); do
+    # 印出 `version` 變數
     echo $version
   done
 }
@@ -354,8 +362,11 @@ list_versions_installed() {
 
 # 宣告 `display_versions` 函數
 display_versions() {
+  # 呼叫函數 `enter_fullscreen`
   enter_fullscreen
+  # 呼叫函數 `check_current_version`
   check_current_version
+  #
   display_versions_with_selected $active
 
   trap handle_sigint INT
@@ -387,6 +398,7 @@ display_versions() {
 
 # 宣告 `erase_line` 函數
 erase_line() {
+  #
   printf "\033[1A\033[2K"
 }
 
@@ -396,6 +408,7 @@ erase_line() {
 
 # 宣告 `is_ok` 函數
 is_ok() {
+  #
   curl -Is $1 | head -n 1 | grep 200 > /dev/null
 }
 
@@ -441,8 +454,11 @@ tarball_url() {
 
 # 宣告 `activate` 函數
 activate() {
+  # 宣告區域變數 `version` 為第一個參數
   local version=$1
+  # 呼叫函數 `check_current_version`
   check_current_version
+  #
   if test "$version" != "$active"; then
     local dir=$BASE_VERSIONS_DIR/$version
     echo $active > $BASE_VERSIONS_DIR/.prev
@@ -472,6 +488,7 @@ activate_previous() {
 
 # 宣告 `install` 函數
 install() {
+  # 宣告區域變數 `version`，把第一個參數 v 左邊切掉
   local version=${1#v}
 
   local dots=$(echo $version | sed 's/[^.]*//g')
